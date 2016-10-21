@@ -7,7 +7,7 @@
 
 module.exports = {
   DOMAIN: 'http://localhost:9000',
-  SESSION_SECRET: 'rmnodejsfrontend-secret',
+  SESSION_SECRET: 'express-node-express',
   // Control debug level for modules using visionmedia/debug
   DEBUG: ''
 };

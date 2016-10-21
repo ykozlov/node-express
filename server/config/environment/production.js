@@ -5,17 +5,17 @@
 // =================================
 module.exports = {
     // Server IP
-    ip: process.env.ip
+  ip: process.env.ip
     || undefined,
 
     // Server port
-    port: process.env.port
+  port: process.env.port
     || 8080,
 
     // MongoDB connection options
-    mongo: {
-        uri: process.env.MONGODB_URI
+  mongo: {
+    uri: process.env.MONGODB_URI
         || process.env.MONGOHQ_URL
-        || 'mongodb://localhost/rmnodejsfrontend'
-    }
+        || 'mongodb://localhost/express-node-dev'
+  }
 };

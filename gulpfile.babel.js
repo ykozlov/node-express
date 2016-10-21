@@ -41,37 +41,12 @@ function onServerLog(log) {
         log.message);
 }
 
-function checkAppReady(cb) {
-  var options = {
-    host: 'localhost',
-    port: config.port
-  };
-  http
-        .get(options, () => cb(true))
-        .on('error', () => cb(false));
-}
-
-// Call page until first success
-function whenServerReady(cb) {
-  var serverReady = false;
-  var appReadyInterval = setInterval(() =>
-        checkAppReady(ready => {
-          if(!ready || serverReady) {
-            return;
-          }
-          clearInterval(appReadyInterval);
-          serverReady = true;
-          cb();
-        }),
-        100);
-}
-
 /********************
  * Reusable pipelines
  ********************/
 
 let lintServerScripts = lazypipe()
-    .pipe(plugins.eslint, `${serverPath}/.eslintrc`)
+    .pipe(plugins.eslint, './.eslintrc')
     .pipe(plugins.eslint.format);
 
 let transpileServer = lazypipe()
@@ -116,10 +91,7 @@ gulp.task('transpile:server', () => {
         .pipe(gulp.dest(`${paths.dist}/${serverPath}`));
 });
 
-gulp.task('copy-index-html', function() {
-});
-
-gulp.task('copy-templates', ()=> {
+gulp.task('copy-templates', () => {
   gulp.src(paths.server.templates)
     .pipe(gulp.dest(`${paths.dist}/${serverPath}/${templatesPath}`));
 });
@@ -128,7 +100,7 @@ gulp.task('lint:scripts', cb => runSequence(['lint:scripts:server'], cb));
 
 
 gulp.task('lint:scripts:server', () => {
-  return gulp.src([])
+  return gulp.src(['./server/**/*.js'])
         .pipe(lintServerScripts());
 });
 
@@ -169,9 +141,10 @@ gulp.task('start:server:debug', () => {
 });
 
 gulp.task('watch', () => {
-
-  plugins.watch([])
-        .pipe(lintServerScripts());
+  plugins.watch(['./server/**/*.js'], function() {
+    return gulp.src(['./server/**/*.js'])
+            .pipe(lintServerScripts());
+  });
 });
 
 gulp.task('serve', cb => {

@@ -1,7 +1,8 @@
 {
     "parser": "babel-eslint",
     "env": {
-        "es6": true
+        "es6": true,
+        "node":true
     },
     "globals": {},
     "plugins": [],
@@ -82,7 +83,7 @@
         "no-octal-escape": 0,                                       //disallow use of octal escape sequences in string literals, such as var foo = "Copyright \251";
         "no-octal": 0,                                              //disallow use of octal literals
         "no-param-reassign": 0,                                     //disallow reassignment of function parameters
-        "no-process-env": 1,                                        //disallow use of process.env
+        "no-process-env": 0,                                        //disallow use of process.env
         "no-proto": 2,                                              //disallow usage of __proto__ property
         "no-redeclare": 2,                                          //disallow declaring the same variable more than once
         "no-return-assign": 2,                                      //disallow use of assignment in return statement
@@ -201,7 +202,7 @@
         "object-curly-newline": 0,                                  //enforce consistent line breaks inside braces
         "object-curly-spacing": 0,                                  //require or disallow padding inside curly braces
         "object-property-newline": 0,                               //enforce placing object properties on separate lines
-        "one-var": [2, "never"],                                    //require or disallow one variable declaration per function
+        "one-var": [0, "never"],                                    //require or disallow one variable declaration per function
         "one-var-declaration-per-line": 2,                          //require or disallow an newline around variable declarations
         "operator-assignment": 0,                                   //require assignment operator shorthand where possible or prohibit it entirely
         "operator-linebreak": [1, "before"],                        //enforce operators to be placed before or after line breaks
@@ -213,8 +214,8 @@
         "sort-imports": 0,                                          //sort import declarations within module
         "semi": 2,                                                  //require or disallow use of semicolons instead of ASI
         "sort-vars": 0,                                             //sort variables within the same declaration block
-        "space-before-blocks": 2,                                   //require or disallow a space before blocks
-        "space-before-function-paren": [2, "never"],                //require or disallow a space before function opening parenthesis
+        "space-before-blocks": 0,                                   //require or disallow a space before blocks
+        "space-before-function-paren": [0, "never"],                //require or disallow a space before function opening parenthesis
         "space-in-parens": 2,                                       //require or disallow spaces inside parentheses
         "space-infix-ops": 2,                                       //require spaces around operators
         "space-unary-ops": 2,                                       //require or disallow spaces before/after unary operators

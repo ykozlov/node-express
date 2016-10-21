@@ -14,6 +14,8 @@ import _ from 'lodash';
 // All configurations will extend these options
 // ============================================
 var all = {
+  userRoles: ['guest', 'user', 'admin'],
+
   env: process.env.NODE_ENV,
 
   // Root path of server
@@ -33,7 +35,7 @@ var all = {
 
   // Secret for session, you will want to change this and make it an environment variable
   secrets: {
-    session: '>d}g@S(a3J7%,Z%b'
+    session: '>d}q@ff(a3J7Z%b'
   },
 
   // MongoDB connection options
@@ -50,5 +52,4 @@ var all = {
 // ==============================================
 module.exports = _.merge(
   all,
-  require('./shared'),
   require(`./${process.env.NODE_ENV}.js`) || {});

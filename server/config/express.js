@@ -4,16 +4,14 @@
 
 'use strict';
 
-import express from 'express';
-import favicon from 'serve-favicon';
+//import express from 'express';
 import morgan from 'morgan';
-import shrinkRay from 'shrink-ray';
 import bodyParser from 'body-parser';
 import methodOverride from 'method-override';
 import cookieParser from 'cookie-parser';
 import errorHandler from 'errorhandler';
-import path from 'path';
-import lusca from 'lusca';
+//import path from 'path';
+//import lusca from 'lusca';
 import config from './environment';
 import passport from 'passport';
 import session from 'express-session';
@@ -24,18 +22,11 @@ var MongoStore = connectMongo(session);
 export default function(app) {
   var env = app.get('env');
 
-  if(env === 'development' || env === 'test') {
-    app.use(express.static(path.join(config.root, '.tmp')));
-  }
+  //if(env === 'development' || env === 'test') {
+  //  app.use(express.static(path.join(config.root, '.tmp')));
+  //}
 
-
-  app.set('appPath', path.join(config.root, 'client'));
-  app.use(express.static(app.get('appPath')));
   app.use(morgan('dev'));
-
-  app.set('views', config.root + '/server/views');
-  app.set('view engine', 'pug');
-  app.use(shrinkRay());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
   app.use(methodOverride());

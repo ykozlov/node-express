@@ -4,42 +4,19 @@ import crypto from 'crypto';
 mongoose.Promise = require('bluebird');
 import mongoose, {Schema} from 'mongoose';
 
-const authTypes = ['github', 'twitter', 'facebook', 'google'];
-
 var UserSchema = new Schema({
   name: String,
   email: {
     type: String,
-    lowercase: true,
-    required() {
-      if(authTypes.indexOf(this.provider) === -1) {
-        return true;
-      } else {
-        return false;
-      }
-    }
+    lowercase: true
   },
   role: {
     type: String,
     default: 'user'
   },
-  password: {
-    type: String,
-    required() {
-      if(authTypes.indexOf(this.provider) === -1) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-  },
+  password: String,
   provider: String,
-  salt: String,
-  google: {},
-  github: {},
-  accessToken: String,
-  refreshToken: String,
-  calendarId: String
+  salt: String
 });
 
 /**
@@ -74,9 +51,6 @@ UserSchema
 UserSchema
   .path('email')
   .validate(function(email) {
-    if(authTypes.indexOf(this.provider) !== -1) {
-      return true;
-    }
     return email.length;
   }, 'Email cannot be blank');
 
@@ -84,9 +58,6 @@ UserSchema
 UserSchema
   .path('password')
   .validate(function(password) {
-    if(authTypes.indexOf(this.provider) !== -1) {
-      return true;
-    }
     return password.length;
   }, 'Password cannot be blank');
 
@@ -94,11 +65,7 @@ UserSchema
 UserSchema
   .path('email')
   .validate(function(value, respond) {
-    if(authTypes.indexOf(this.provider) !== -1) {
-      return respond(true);
-    }
-
-    return this.constructor.findOne({ email: value }).exec()
+    return this.constructor.findOne({email: value}).exec()
       .then(user => {
         if(user) {
           if(this.id === user.id) {
@@ -128,124 +95,65 @@ UserSchema
     }
 
     if(!validatePresenceOf(this.password)) {
-      if(authTypes.indexOf(this.provider) === -1) {
-        return next(new Error('Invalid password'));
-      } else {
-        return next();
-      }
+      return next(new Error('Invalid password'));
     }
 
     // Make salt with a callback
-    this.makeSalt((saltErr, salt) => {
-      if(saltErr) {
-        return next(saltErr);
-      }
-      this.salt = salt;
-      this.encryptPassword(this.password, (encryptErr, hashedPassword) => {
-        if(encryptErr) {
-          return next(encryptErr);
-        }
+    this.makeSalt()
+      .then(salt => {
+        this.salt = salt;
+        return this.encryptPassword(this.password);
+      })
+      .then(hashedPassword => {
         this.password = hashedPassword;
         return next();
-      });
-    });
+      })
+      .catch(next);
   });
 
 /**
  * Methods
  */
 UserSchema.methods = {
-  /**
-   * Authenticate - check if the passwords are the same
-   *
-   * @param {String} password
-   * @param {Function} callback
-   * @return {Boolean}
-   * @api public
-   */
-  authenticate(password, callback) {
-    if(!callback) {
-      return this.password === this.encryptPassword(password);
-    }
-
-    this.encryptPassword(password, (err, pwdGen) => {
-      if(err) {
-        return callback(err);
-      }
-
-      if(this.password === pwdGen) {
-        return callback(null, true);
-      } else {
-        return callback(null, false);
-      }
+  authenticate(password) {
+    return new Promise((resolve, reject) => {
+      this.encryptPassword(password)
+        .then(pwdGen => resolve(this.password == pwdGen))
+        .catch(reject);
     });
   },
 
-  /**
-   * Make salt
-   *
-   * @param {Number} [byteSize] - Optional salt byte size, default to 16
-   * @param {Function} callback
-   * @return {String}
-   * @api public
-   */
-  makeSalt(byteSize, callback) {
-    var defaultByteSize = 16;
+  makeSalt() {
+    return new Promise((resolve, reject) => {
+      var byteSize = 16;
 
-    if(typeof arguments[0] === 'function') {
-      callback = arguments[0];
-      byteSize = defaultByteSize;
-    } else if(typeof arguments[1] === 'function') {
-      callback = arguments[1];
-    } else {
-      throw new Error('Missing Callback');
-    }
-
-    if(!byteSize) {
-      byteSize = defaultByteSize;
-    }
-
-    return crypto.randomBytes(byteSize, (err, salt) => {
-      if(err) {
-        return callback(err);
-      } else {
-        return callback(null, salt.toString('base64'));
-      }
+      crypto.randomBytes(byteSize, (err, salt) => {
+        if(err) {
+          return reject(err);
+        } else {
+          return resolve(salt.toString('base64'));
+        }
+      });
     });
   },
 
-  /**
-   * Encrypt password
-   *
-   * @param {String} password
-   * @param {Function} callback
-   * @return {String}
-   * @api public
-   */
-  encryptPassword(password, callback) {
-    if(!password || !this.salt) {
-      if(!callback) {
-        return null;
-      } else {
-        return callback('Missing password or salt');
+  encryptPassword(password) {
+    return new Promise((resolve, reject) => {
+      if(!password || !this.salt) {
+        return reject('Missing password or salt');
       }
-    }
 
-    var defaultIterations = 10000;
-    var defaultKeyLength = 64;
-    var salt = new Buffer(this.salt, 'base64');
+      var defaultIterations = 10000,
+        defaultKeyLength = 64,
+        salt = new Buffer(this.salt, 'base64');
 
-    if(!callback) {
-      return crypto.pbkdf2Sync(password, salt, defaultIterations, defaultKeyLength)
-        .toString('base64');
-    }
-
-    return crypto.pbkdf2(password, salt, defaultIterations, defaultKeyLength, (err, key) => {
-      if(err) {
-        return callback(err);
-      } else {
-        return callback(null, key.toString('base64'));
-      }
+      crypto.pbkdf2(password, salt, defaultIterations, defaultKeyLength, (err, key) => {
+        if(err) {
+          return reject(err);
+        } else {
+          return resolve(key.toString('base64'));
+        }
+      });
     });
   }
 };
