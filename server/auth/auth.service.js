@@ -31,7 +31,7 @@ export function isAuthenticated() {
     })
     // Attach user to request
     .use(function(req, res, next) {
-      User.findById(req.user._id).exec()
+      User.findById(req.user._id)
         .then(user => {
           if(!user) {
             return res.status(401).end();
@@ -39,7 +39,7 @@ export function isAuthenticated() {
           req.user = user;
           return next();
         })
-        .catch(err => next(err));
+        .catch(next);
     });
 }
 
