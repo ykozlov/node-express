@@ -16,14 +16,10 @@ var plugins = gulpLoadPlugins();
 var config;
 
 const serverPath = 'server';
-const templatesPath = 'templates';
 const paths = {
   server: {
     scripts: [
-      `!${serverPath}/config/local.env.sample.js`
-    ],
-    templates: [
-      `${serverPath}/${templatesPath}/**/*`
+      `./server/**/*.js`
     ],
     json: [`${serverPath}/**/*.json`]
   },
@@ -91,16 +87,11 @@ gulp.task('transpile:server', () => {
         .pipe(gulp.dest(`${paths.dist}/${serverPath}`));
 });
 
-gulp.task('copy-templates', () => {
-  gulp.src(paths.server.templates)
-    .pipe(gulp.dest(`${paths.dist}/${serverPath}/${templatesPath}`));
-});
-
 gulp.task('lint:scripts', cb => runSequence(['lint:scripts:server'], cb));
 
 
 gulp.task('lint:scripts:server', () => {
-  return gulp.src(['./server/**/*.js'])
+  return gulp.src(paths.server.scripts)
         .pipe(lintServerScripts());
 });
 
@@ -109,8 +100,6 @@ gulp.task('jscs', () => {
       .pipe(plugins.jscs())
       .pipe(plugins.jscs.reporter());
 });
-
-gulp.task('clean:tmp', () => del(['.tmp/**/*'], {dot: true}));
 
 gulp.task('start:server', () => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -141,8 +130,8 @@ gulp.task('start:server:debug', () => {
 });
 
 gulp.task('watch', () => {
-  plugins.watch(['./server/**/*.js'], function() {
-    return gulp.src(['./server/**/*.js'])
+  plugins.watch(paths.server.scripts, function() {
+    return gulp.src(paths.server.scripts)
             .pipe(lintServerScripts());
   });
 });
@@ -150,7 +139,6 @@ gulp.task('watch', () => {
 gulp.task('serve', cb => {
   runSequence(
     [
-      'clean:tmp',
       'lint:scripts',
       'env:all'
     ],
@@ -163,7 +151,6 @@ gulp.task('serve', cb => {
 gulp.task('serve:debug', cb => {
   runSequence(
     [
-      'clean:tmp',
       'lint:scripts',
       'env:all'
     ],
@@ -191,13 +178,11 @@ gulp.task('serve:dist', cb => {
 gulp.task('build', cb => {
   runSequence(
     [
-      'clean:dist',
-      'clean:tmp'
+      'clean:dist'
     ],
     'transpile:server',
     [
-      'copy:server',
-      'copy-templates'
+      'copy:server'
     ]
     ,
     cb);
