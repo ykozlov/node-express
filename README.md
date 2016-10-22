@@ -1,4 +1,5 @@
 # MongoDB-NodeJs-Express starter
+Simple REST API starter server with authorization
  
 ## Prerequisites
  * NodeJS - Download and Install [NodeJS](https://nodejs.org/en/)
