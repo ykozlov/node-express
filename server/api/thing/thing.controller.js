@@ -1,23 +1,114 @@
+/**
+ * Using Rails-like standard naming convention for endpoints.
+ * GET     /api/things              ->  index
+ * POST    /api/things              ->  create
+ * GET     /api/things/:id          ->  show
+ * PUT     /api/things/:id          ->  upsert
+ * PATCH   /api/things/:id          ->  patch
+ * DELETE  /api/things/:id          ->  destroy
+ */
+
 'use strict';
 
-import Thing from './thing.model.js';
+import jsonpatch from 'fast-json-patch';
+import Thing from './thing.model';
+
+function respondWithResult(res, statusCode) {
+  statusCode = statusCode || 200;
+  return function(entity) {
+    if(entity) {
+      return res.status(statusCode).json(entity);
+    }
+    return null;
+  };
+}
+
+function patchUpdates(patches) {
+  return function(entity) {
+    try {
+      jsonpatch.apply(entity, patches, /*validate*/ true);
+    } catch(err) {
+      return Promise.reject(err);
+    }
+
+    return entity.save();
+  };
+}
+
+function removeEntity(res) {
+  return function(entity) {
+    if(entity) {
+      return entity.remove()
+        .then(() => res.status(204).end());
+    }
+  };
+}
+
+function handleEntityNotFound(res) {
+  return function(entity) {
+    if(!entity) {
+      res.status(404).end();
+      return null;
+    }
+    return entity;
+  };
+}
 
 function handleError(res, statusCode) {
   statusCode = statusCode || 500;
   return function(err) {
-    return res.status(statusCode).send(err);
+    res.status(statusCode).send(err);
   };
 }
 
+// Gets a list of Things
 export function index(req, res) {
-  return Thing.find({})
-    .then(things => res.status(200).json(things))
+  Thing.find()
+    .then(respondWithResult(res))
     .catch(handleError(res));
 }
 
+// Gets a single Thing from the DB
+export function show(req, res) {
+  Thing.findById(req.params.id)
+    .then(handleEntityNotFound(res))
+    .then(respondWithResult(res))
+    .catch(handleError(res));
+}
+
+// Creates a new Thing in the DB
 export function create(req, res) {
-  var newThing = new Thing(req.body);
-  newThing.save()
-    .then(thing => res.json(thing))
+  Thing.create(req.body)
+    .then(respondWithResult(res, 201))
+    .catch(handleError(res));
+}
+
+// Upserts the given Thing in the DB at the specified ID
+export function upsert(req, res) {
+  if(req.body._id) {
+    delete req.body._id;
+  }
+  Thing.findOneAndUpdate({_id: req.params.id}, req.body, {upsert: true, setDefaultsOnInsert: true, runValidators: true})
+    .then(respondWithResult(res))
+    .catch(handleError(res));
+}
+
+// Updates an existing Thing in the DB
+export function patch(req, res) {
+  if(req.body._id) {
+    delete req.body._id;
+  }
+  Thing.findById(req.params.id)
+    .then(handleEntityNotFound(res))
+    .then(patchUpdates(req.body))
+    .then(respondWithResult(res))
+    .catch(handleError(res));
+}
+
+// Deletes a Thing from the DB
+export function destroy(req, res) {
+  Thing.findById(req.params.id)
+    .then(handleEntityNotFound(res))
+    .then(removeEntity(res))
     .catch(handleError(res));
 }
